@@ -1,2 +1,3 @@
 # Representacion-del-Conocimiento
-Asiignatura de 3º
+Jesus Delgado Jimenez
+Asignatura de 3º de Ingenieria Informatica UHU
