@@ -1,0 +1,401 @@
+/*
+--> No consigo que termine de leer correctamente mis laberintos desde un fichero
+*/
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Planteamiento del Problema		*/
+		/* ------------------------------------------------------------ */
+
+
+/*
+Considero que mi laberinto será una Lista de Listas:
+	-[] 		--> Cierto
+	-['_']		--> Falso
+	-['_'|_]	--> Falso
+	-[['_'|_]|_]	--> Cierto
+
+Siendo el inicio de lectura de dicho laberinto(pos(0,0)) la esquina superior izquierda.
+La entrada del laberinto sera la letra 'e'
+La salida del laberinto sera la letra 's'
+Las paredes y bloqueos se representaran mediante el caracter '#'
+El camino libre mediante el espacio ' '.
+
+Ej: laberinto( [ ['#','e','#','#','#','#'],
+	         ['#',' ',' ',' ',' ','#'],
+	         ['#','#','#','#','s','#'] ]).
+
+El camino seria: Inicio--> pos(1,0).			-->Fila 0, columna 1
+		mov( delante, pos(1,0), pos(1,1) ).	--> Aqui tb podria ir para atras...
+		mov( derecha, pos(1,1), pos(2,1) ). 	-->Solo hacia ese lado
+		mov( derecha, pos(2,1), pos(3,1) ).	-->Tb puede a la izq pero repetiria posicion
+		mov( derecha, pos(3,1), pos(4,1) ).
+		mov( delante, pos(4,1), pos(4,2) ).	-->Salida
+
+*/
+
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Laberintos diseñados			*/
+		/* ------------------------------------------------------------ */
+
+
+laberintoError0([]).
+laberintoError1(['#']).
+laberintoError2([' ']).
+laberintoError3(['s']).
+laberintoError4(['e']).
+
+laberinto0( [ ['#','e','#'],
+	      ['#',' ','#'],
+              ['#','s','#'] ]).
+/*Solucion unica pero con basura al final*/
+laberinto1( [ ['#','e','#','#','#','#'],
+	      ['#',' ',' ',' ',' ','#'],
+              ['#','#','#','#','s','#'] ]).
+/*Solucion unica pero con basura al final*/
+laberinto2( [ ['#','e','#','#','#','#'],
+	      ['#',' ',' ',' ',' ','#'],
+	      ['#',' ','#',' ','#','#'],
+	      ['#',' ',' ',' ',' ','#'],
+              ['#','#','#','#','s','#'] ]).
+/*En laberinto2, solo me da un camino + basura al final...*/
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Resolucion del problema			*/
+		/* ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------ */
+/*		Resolver laberinto(+Lab, -Recorrido)		*/
+/* ------------------------------------------------------------ */
+/*	Es cierto si Recorrido unifica con el camino seguido
+para resolver el laberinto.
+
+resolverLab([],[]).
+resolverLab(Lab, Recorrido):-
+	posInicioLab(Lab, Ini),
+	posFinLab(Lab, Fin),
+	camino(Lab, Ini, Fin, [], Recorrido). /*Me falta por terminar*/
+
+
+?- A=[['e'],['s']], resolverLab(A,R).
+A = [[e], [s]],
+R = [adelante|_77776] ;
+Action (h for help) ? Options:
+a:           abort         b:           break
+c:           continue      e:           exit
+g:           goals         s:           C-backtrace
+t:           trace         p:             Show PID
+h (?):       help
+Action (h for help) ? abort
+% Execution Aborted
+?- A=[['e','#','#'],[' ',' ',' '],['#','#','s']], resolverLab(A,R).
+A = [[e, #, #], [' ', ' ', ' '], [#, #, s]],
+R = [adelante, derecha, derecha, adelante|_77996] ;
+Action (h for help) ? Options:
+a:           abort         b:           break
+c:           continue      e:           exit
+g:           goals         s:           C-backtrace
+t:           trace         p:             Show PID
+h (?):       help
+Action (h for help) ? abort
+% Execution Aborted
+
+*/
+resolverLab([],[]).
+resolverLab(Lab, Recorrido):-
+	posInicioLab(Lab, Ini),
+	posFinLab(Lab, Fin),
+	camino(Lab, Ini, Fin, [], Recorrido). /*Me falta por terminar*/
+
+
+
+
+/* ------------------------------------------------------------ */
+/* camino(+Lab, +EstadoInicial, +EstadoFinal, *Visitados, -R)	*/
+/* ------------------------------------------------------------ */
+/*	Es cierto si R unifica con una lista de movimientos para pasar del 
+EstadoInicial al EstadoFinal sin repetir los estados de la lista de
+estados Visitados.
+
+	Inicial --> Mov --> Estado TMP			Final
+				------------------------->
+								N-1
+
+*/
+camino([],_, _, _, []).
+camino(_,Fin, Fin, _, _). /*-->Sin esto se queda pillado, Pero me da los movimientos y basura y Ademas si pido mas soluciones se buguea*/
+camino(Lab,Ini, Fin, Visitados, [Mov|Camino] ):-
+	Ini \= Fin,	
+	mov(Lab, Mov, Ini, Tmp),
+	\+ member(Tmp, Visitados),
+	camino(Lab, Tmp, Fin, [Tmp|Visitados], Camino).
+
+
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Movimientos Disponibles			*/
+		/* ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------ */
+/*			Movimientos				*/
+/* ------------------------------------------------------------ */
+/* Serie de movimientos que tendra para poder recorrer el laberinto 
+*/
+
+	/* Moverse hacia abajo */
+mov(Lab, adelante, pos(X,Y), pos(X,Y2)):-
+	Y2 is Y+1, 
+	\+ pared(Lab,pos(X,Y2)).
+
+	/* Moverse hacia arriba */
+mov(Lab, atras, pos(X,Y), pos(X,Y2)):-
+	Y2 is Y-1, 
+	\+ pared(Lab,pos(X,Y2)).
+
+	/* Moverse hacia la derecha */
+mov(Lab, derecha, pos(X,Y), pos(X2,Y)):-
+	X2 is X+1, 
+	\+ pared(Lab,pos(X2,Y)).
+
+	/* Moverse hacia la izquierda */
+mov(Lab, izquierda, pos(X,Y), pos(X2,Y)):-
+	X2 is X-1, 
+	\+ pared(Lab,pos(X2,Y)).
+
+
+		/* ------------------------------------------------------------ */
+		/*			Hay que arreglar lo anterior		*/
+		/* ------------------------------------------------------------ */
+
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Ver pos de la entrada ('e')		*/
+		/* ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------ */
+/* 		Posicion Inicio: posInicioLab(+Lab, -pos(X,Y))	*/
+/* ------------------------------------------------------------ */
+/*	 Es cierto si X e Y unifican con las coordenada
+de la entrada ('e') del laberinto, considerando X la 
+posicion dentro de uno de los arrays, e Y la posicion
+de dicho array dentro del laberinto, es decir, X el ancho
+e Y el largo
+
+Buscamos las coordenada X e Y del inicio del laberinto, para saber de 
+donde partir.
+
+Ejemplos:
+?- A= [ ['#',' ','#'], ['#',' ','#'], ['e','#','#'] ], posInicioLab(A,Pos).
+A = [[#, ' ', #], [#, ' ', #], [e, #, #]],
+Pos = pos(0, 2) ;
+false.
+
+?- A= [ ['#',' ','#'], ['#',' ','#'], [' ','#','#'] ], posInicioLab(A,Pos).
+false.
+
+
+*/
+posInicioLab([],0, 0).
+posInicioLab([Lista1|_], pos(X1,0)):-
+	posInicioLista(Lista1, X),
+	length(Lista1, Pos),
+	X < Pos,				/* Si lo ha encontrado */
+	X1 is X.
+posInicioLab([Lista1|Resto], pos(X1,Y1)):-
+	posInicioLista(Lista1, X),
+	length(Lista1,Pos),
+	X == Pos, 				/* Si no lo ha encontrado */
+	posInicioLab(Resto,pos(X1,Y)),		/* Seguimos buscando */
+	Y1 is Y + 1.				/* Incrementamos la Y */
+	
+	
+
+/* ------------------------------------------------------------ */
+/* 			posInicioLista(+Lista, -X)		*/
+/* ------------------------------------------------------------ */
+/*	Es cierto si X unifica con la posicion de 'e' en la Lista 
+
+Lo que buscamos es la coordenada X de la entrada ('e') del
+laberinto
+
+
+Casos bases: Lista vacia --> X=0
+Caso base: contenido en la primera pos --> X=0
+Caso base: NO lo contenga --> Deberia estar dentro de X = 0+lenght(Laberinto)
+	por lo que considerare que nuca puede encontrarse el array vacio, ni
+	que la posicion no puede ser el length del array
+
+Ej: [1 2 3] --> el 2 esta en X = 1
+    Cab=1 Resto=[2 3] --> X = 0
+    Cab=2 Resto=[3]   --> X = 1
+
+Ej de funcionamiento: posInicioLista(['X','X','e','X'], X).
+			Cab = 'X' 	Resto=['X','e','X'] 	--> X = 0
+    			Cab = 'X' 	Resto=['e','X']   	--> X = 1
+    			Cab = 'e' 	Resto=['X']   		--> X = 2
+
+
+
+*/
+posInicioLista([], 0).			/*Si no esta en dicho array*/
+posInicioLista(['e'|_], 0).		/*Si esta en la primera pos*/
+posInicioLista([Cab|Resto], X1):-	/*Resto de casos*/
+	Cab \= 'e',			/*NO es la entrada*/
+	posInicioLista(Resto, X),	/*Seguimos buscando*/
+	X1 is X + 1.			/*Incrementamos la X buscada*/
+	
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Ver pos de la salida ('s')		*/
+		/* ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------ */
+/* 		Posicion Fin: posFinLab(+Lab, -pos(X,Y))	*/
+/* ------------------------------------------------------------ */
+/*	 Es cierto si X e Y unifican con las coordenada
+de la salida ('s') del laberinto, considerando X la 
+posicion dentro de uno de las Listas, e Y la posicion
+de dicha Lista dentro del laberinto, es decir, X el ancho
+e Y el largo
+
+Buscamos las coordenada X e Y del inicio del laberinto, para saber de 
+donde partir.
+
+Ejemplos:
+?- A=[ ['#',' ','#'], ['#',' ','#'], ['#',' ','e'] ], posFinLab(A, Pos).
+false.
+
+?- A=[ ['#',' ','#'], ['#','s','#'], ['#',' ','e'] ], posFinLab(A, Pos).
+A = [[#, ' ', #], [#, s, #], [#, ' ', e]],
+Pos = pos(1, 1) ;
+false.
+
+
+
+*/
+posFinLab([],0, 0).
+posFinLab([Lista1|_], pos(X1, 0)):-
+	posFinLista(Lista1, X),
+	length(Lista1, Pos),
+	X < Pos,
+	X1 is X.
+posFinLab([Lista1|Resto], pos(X1, Y1)):-
+	posFinLista(Lista1, X),
+	length(Lista1,Pos),
+	X == Pos, 				/* Si no lo ha encontrado */
+	posFinLab(Resto,pos(X1,Y)),		/* Seguimos buscando */
+	Y1 is Y + 1.				/* Incrementamos la Y */
+	
+	
+/* ------------------------------------------------------------ */
+/* 			posFinLista(+Lista, -X)			*/
+/* ------------------------------------------------------------ */
+/*	Es cierto si X1 unifica con la posicion de 's' en la Lista 
+
+Lo que buscamos es la coordenada X de la salida ('s') del
+laberinto
+
+
+Es igual que posInicioLista
+
+*/
+posFinLista([], 0).			/*Si no esta en dicho array*/
+posFinLista(['s'|_], 0).		/*Si esta en la primera pos*/
+posFinLista([Cab|Resto], X1):-		/*Resto de casos*/
+	Cab \= 's',			/*NO es la entrada*/
+	posFinLista(Resto, X),		/*Seguimos buscando*/
+	X1 is X + 1.			/*Incrementamos la X buscada*/
+
+
+
+
+		/* ------------------------------------------------------------ */
+		/*			Ver si hay un bloqueo (Pared)		*/
+		/* ------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------ */
+/* 			pared(+Lab,+pos(X,Y))			*/
+/* ------------------------------------------------------------ */
+/* Es cierto si pos(X,Y) unifican con si hay o no una pared('#')
+en dichas posiciones del laberinto, siendo la Y el numero de
+Lista del laberinto (Altura) y X con la posicion del elemento
+de dicha Lista (Anchura).
+
+
+*/
+/* pared([['#'|_]|_], pos(0,0)). --> No necesito este, pues ya lo comprobaria en la siguiente (Da doble resultado) */
+
+pared([Cab|_], pos(X1,0)):-	/* Una vez hallada la Y, nos fijamos en la X 	*/
+	Cab \= '#',		/* Comprobamos que no es un unico caracter   	*/
+	Cab \= 's',		/* sino una Lista, para eso comprobamos con  	*/
+	Cab \= 'e',		/* todos los caracteres posibles del	     	*/
+	Cab \= ' ',		/* laberinto 					*/
+	length(Cab, Tam),	/* Vemos su tamaño				*/
+	X1 < Tam,		/* La pos requerida no supere el tamaño de la lista	*/
+	paredLista(Cab,X1).
+pared([_|Resto], pos(X1,Y1)):-	/* Analizamos la Y */
+	Y1 > 0,
+	Y is Y1 - 1,
+	pared(Resto,pos(X1, Y)).
+	
+
+
+
+/* ------------------------------------------------------------ */
+/* 			paredLista(+Lista, +X)			*/
+/* ------------------------------------------------------------ */
+/*	Es cierto si X unifica con la posicion de una pared ('#')
+	de la Lista
+
+
+Lo que buscamos es la coordenada X de la salida ('s') del
+laberinto
+
+
+Ejemplos: 
+
+?- laberintoError2(A), paredLista(A, 0).
+false.
+
+?- laberintoError1(A), paredLista(A, 0).
+A = [#] ;
+false.
+
+?- A = ['#',' '],paredLista(A, 0).
+A = [#, ' '] ;
+false.
+
+?- A = [' ',' '],paredLista(A, 0).
+false.
+
+*/
+
+paredLista(['#'|_], 0).
+paredLista([_|Resto], X):-
+	X > 0,
+	X1 is X - 1,
+	paredLista(Resto, X1).
+	
