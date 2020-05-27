@@ -1,0 +1,16 @@
+Aqui colocare ambas entregas de la practica, cada uno, con su nombre correspondiente.
+Ambas entregas son de la misma práctica, la cual consiste en resolver laberintos.
+Es una práctica de SWI-Porlog.
+
+Una posible ampliación seria leerlos desde algún fichero, pero se me ha complicado 
+bastante esto por el tipo de laberinto que he planteado, los cuales se pueden ver y utilizar.
+Consisten en una lista de listas, en las cuales nos encontramos con 4 simbolos diferentes, los
+cuales son: 
+    ·'e'--> señaliza la entrada del laberinto.
+    ·'s'--> señaliza la salida del laberinto.
+    ·'#'-->señaliza las paredes o bloqueos del laberinto.
+    ·' '-->señaliza el zonas libres por lo que se puede pasar.
+Esta practica intentara ir desde la entrada hasta la salida sin repetir posicion, devolviendo el conjunto 
+de movimiento que ha necesitado para llegar desde un lado hasta el otro('e'-'s'); sino hay solucion,
+devolvera false; y si hay mas de una debera darlas todas(';') -->Esta parte aun me falta pues solo me muestra
+una unica solucion.
