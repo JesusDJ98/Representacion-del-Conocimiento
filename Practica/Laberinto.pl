@@ -381,6 +381,7 @@ paredLista([_|Resto], X):-
 		/*			     RESULTADOS				*/
 		/* ------------------------------------------------------------ */
 
+/*
 
 ?- laberinto1(A), resolverLab(A, Camino).
 A = [[#, e, #, #, #, #], [#, ' ', ' ', ' ', ' ', #], [#, #, #, #, s, #]],
@@ -457,3 +458,5 @@ false.
 
 ?- laberintoError4(A), resolverLab(A, Camino).
 false.
+
+*/
